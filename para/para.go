@@ -3,19 +3,18 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"unicode"
 )
 
-const wrap_col = 10
+const wrap_col = 90
 
 func main() {
-	var out []byte
-	s := bufio.NewReader(os.Stdin)
-	for line, err := s.ReadBytes('\n'); line != nil; line, err = s.ReadBytes('\n') {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		line := scanner.Text()
 		j, last_white, line_chars := 0, 0, 0
-		out = make([]byte, 2*len(line))
+		out := make([]rune, 2*len(line))
 		for _, c := range line {
 			out[j] = c
 			if unicode.IsSpace(rune(c)) {
@@ -28,10 +27,6 @@ func main() {
 			j++
 			line_chars++
 		}
-		if err != nil {
-			log.Fatal(err)
-		} else {
-			fmt.Println(string(out))
-		}
+		fmt.Println(string(out))
 	}
 }
