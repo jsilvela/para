@@ -3,13 +3,26 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
+	"strconv"
 	"unicode"
 )
 
-const wrap_col = 90
+const default_wrap_col = 90
 
 func main() {
+	var wrap_col int
+	if len(os.Args) < 2 {
+		wrap_col = default_wrap_col
+	} else {
+		num, err := strconv.ParseInt(os.Args[1], 10, 0)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			wrap_col = int(num)
+		}
+	}
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		line := scanner.Text()
