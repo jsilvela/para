@@ -10,7 +10,7 @@ import (
 	"unicode"
 )
 
-const default_wrap_col = 90
+const default_wrap_col = 80
 
 func main() {
 	var wrap int
@@ -43,16 +43,18 @@ type Rapper struct {
 // respect lines that end in a period
 func (r Rapper) wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	for scanner.Scan() {
-		line := scanner.Text()
-		wrapped := r.wrapline(line)
 		if r.pending_break {
 			writer.WriteString("\n")
 			r.pending_break = false
 		}
+		line := scanner.Text()
+		wrapped := r.wrapline(line)
 		writer.WriteString(wrapped)
 		if strings.HasSuffix(line, ".") || len(line) == 0 {
 			// Respect paragraphs and full stops
 			r.pending_break = true
+			r.carry = 0
+		} else if strings.HasSuffix(wrapped, ".") {
 			r.carry = 0
 		} else {
 			lastbrk := strings.LastIndex(wrapped, "\n")
@@ -67,19 +69,28 @@ func (r Rapper) wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 
 // wrap a single line to a colum length, possibly breaking it
 func (r Rapper) wrapline(line string) string {
-	last_white, last_newline := -1, r.carry-1
-	out := make([]rune, len(line))
-	for j, c := range line {
-		out[j] = c
-		if unicode.IsSpace(rune(c)) {
+	last_white, last_newline := -1, -r.carry-1
+	out := make([]byte, len(line))
+	var initbreak bool
+	if len(line) == 0 && r.carry > 0 {
+		initbreak = true
+	}
+	for j := 0; j < len(line); j++ {
+		out[j] = line[j]
+		if unicode.IsSpace(rune(line[j])) {
 			last_white = j
 		}
 		if j-last_newline > r.maxcols && last_white > -1 {
 			out[last_white] = '\n'
 			last_newline = last_white
+		} else if j-last_newline > r.maxcols {
+			initbreak = true
+			last_newline = last_white
 		}
 	}
-	if r.carry > 0 {
+	if initbreak {
+		return "\n" + string(out)
+	} else if r.carry > 0 {
 		return " " + string(out)
 	} else {
 		return string(out)

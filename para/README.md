@@ -6,5 +6,5 @@ Useful for display of text on the Sam and Acme editors, or any other editors whi
 ```
 > para {optional wrap column}
 ```
-If the optional number is not provided, the default wrap column is 90.
+If the optional number is not provided, the default wrap column is 80.
 This takes input from stdin and dumps it to stdout. Again, useful for Acme.
