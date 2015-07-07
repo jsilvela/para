@@ -34,8 +34,8 @@ func main() {
 }
 
 type Rapper struct {
-	maxcols int
-	carry int
+	maxcols       int
+	carry         int
 	pending_break bool
 }
 
@@ -67,14 +67,14 @@ func (r Rapper) wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 
 // wrap a single line to a colum length, possibly breaking it
 func (r Rapper) wrapline(line string) string {
-	last_white, last_newline := -1, r.carry - 1
-	out := make([]rune, 2*len(line)) // at most 1 LF per old char
+	last_white, last_newline := -1, r.carry-1
+	out := make([]rune, len(line))
 	for j, c := range line {
 		out[j] = c
 		if unicode.IsSpace(rune(c)) {
 			last_white = j
 		}
-		if j - last_newline > r.maxcols && last_white > -1 {
+		if j-last_newline > r.maxcols && last_white > -1 {
 			out[last_white] = '\n'
 			last_newline = last_white
 		}
