@@ -10,12 +10,12 @@ import (
 	"unicode"
 )
 
-const default_wrap_col = 80
+const defaultWrapCol = 80
 
 func main() {
 	var wrap int
 	if len(os.Args) < 2 {
-		wrap = default_wrap_col
+		wrap = defaultWrapCol
 	} else {
 		num, err := strconv.ParseInt(os.Args[1], 10, 0)
 		if err != nil {
@@ -33,26 +33,27 @@ func main() {
 	}
 }
 
+// Rapper contains methods for compressive text wrapping
 type Rapper struct {
-	maxcols       int
-	carry         int
-	pending_break bool
+	maxcols      int
+	carry        int
+	pendingBreak bool
 }
 
 // wrap text to column length, compact paragraph along the way
 // respect lines that end in a period
 func (r Rapper) wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	for scanner.Scan() {
-		if r.pending_break {
+		if r.pendingBreak {
 			writer.WriteString("\n")
-			r.pending_break = false
+			r.pendingBreak = false
 		}
 		line := scanner.Text()
 		wrapped := r.wrapline(line)
 		writer.WriteString(wrapped)
 		if strings.HasSuffix(line, ".") || len(line) == 0 {
 			// Respect paragraphs and full stops
-			r.pending_break = true
+			r.pendingBreak = true
 			r.carry = 0
 		} else if strings.HasSuffix(wrapped, ".") {
 			r.carry = 0
@@ -69,7 +70,7 @@ func (r Rapper) wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 
 // wrap a single line to a colum length, possibly breaking it
 func (r Rapper) wrapline(line string) string {
-	last_white, last_newline := -1, -r.carry-1
+	lastWhite, lastNewline := -1, -r.carry-1
 	out := make([]byte, len(line))
 	var initbreak bool
 	if len(line) == 0 && r.carry > 0 {
@@ -78,14 +79,14 @@ func (r Rapper) wrapline(line string) string {
 	for j := 0; j < len(line); j++ {
 		out[j] = line[j]
 		if unicode.IsSpace(rune(line[j])) {
-			last_white = j
+			lastWhite = j
 		}
-		if j-last_newline > r.maxcols && last_white > -1 {
-			out[last_white] = '\n'
-			last_newline = last_white
-		} else if j-last_newline > r.maxcols {
+		if j-lastNewline > r.maxcols && lastWhite > -1 {
+			out[lastWhite] = '\n'
+			lastNewline = lastWhite
+		} else if j-lastNewline > r.maxcols {
 			initbreak = true
-			last_newline = last_white
+			lastNewline = lastWhite
 		}
 	}
 	if initbreak {
