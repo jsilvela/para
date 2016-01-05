@@ -27,7 +27,7 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	writer := bufio.NewWriter(os.Stdout)
 	r := Rapper{maxcols: wrap}
-	err := r.wraptext(scanner, writer)
+	err := r.Wraptext(scanner, writer)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,7 +42,7 @@ type Rapper struct {
 
 // wrap text to column length, compact paragraph along the way
 // respect lines that end in a period
-func (r Rapper) wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
+func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	for scanner.Scan() {
 		if r.pendingBreak {
 			writer.WriteString("\n")
@@ -64,6 +64,9 @@ func (r Rapper) wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 				r.carry = r.carry + 1
 			}
 		}
+	}
+	if scanner.Err() != nil {
+		return scanner.Err()
 	}
 	return writer.Flush()
 }
