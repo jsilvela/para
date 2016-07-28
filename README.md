@@ -2,6 +2,7 @@
 A simple command-line util to wrap text to a given column.
 *para* compresses the text to form compact paragraphs, and respects full stops
 and paragraph breaks.
+It also respects Markdown headers and list items (easy to implement more of it).
 
 It is meant for display of text on the *Sam* and *Acme* editors, or any other
 editors which break words or don’t wrap lines.
