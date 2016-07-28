@@ -87,12 +87,17 @@ func (r Rapper) wrapline(line string) string {
 		if unicode.IsSpace(rune(line[j])) {
 			lastWhite = j
 		}
+		if j-lastWhite > r.maxcols {
+			log.Fatal("Word exceeds maxcols, line cannot be wrapped: " + line)
+		}
 		if j-lastNewline > r.maxcols && lastWhite > -1 {
 			out[lastWhite] = '\n'
 			lastNewline = lastWhite
-		} else if j-lastNewline > r.maxcols {
+		} else if j-lastNewline > r.maxcols && lastNewline < -1 {
 			startWithBreak = true
 			lastNewline = -1
+		} else if j-lastNewline > r.maxcols {
+			panic("Should never get here")
 		}
 	}
 	if startWithBreak {
