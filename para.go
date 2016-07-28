@@ -42,25 +42,25 @@ type Rapper struct {
 // respect lines that end in a period
 func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	var carry int
+	endLine := func () {
+			writer.WriteString("\n")
+			carry = 0
+	}
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if len(line) == 0 {
 			// Respect paragraphs
 			if carry > 0 {
-				writer.WriteString("\n")
-				carry = 0
-				writer.WriteString("\n")
-			} else {
-				writer.WriteString("\n")
+				endLine()
 			}
+			writer.WriteString("\n")
 			continue
 		}
 		wrapped := r.wrapline(line, carry)
 		writer.WriteString(wrapped)
 		if strings.HasSuffix(wrapped, ".") {
 			// Respect full stops
-			writer.WriteString("\n")
-			carry = 0
+			endLine()
 		} else {
 			lastBrk := strings.LastIndex(wrapped, "\n")
 			if lastBrk == -1 {
@@ -80,7 +80,6 @@ func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 func (r Rapper) wrapline(line string, carry int) string {
 	lastWhite := -1
 	lastNewline := -carry - 1
-	log.Println(line, carry)
 
 	out := make([]byte, len(line))
 	var startWithBreak bool
