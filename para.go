@@ -36,36 +36,37 @@ func main() {
 // Rapper contains methods for compressive text wrapping
 type Rapper struct {
 	maxcols int
-	carry   int
 }
 
 // wrap text to column length, compact paragraph along the way
 // respect lines that end in a period
 func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
+	var carry int
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if len(line) == 0 {
 			// Respect paragraphs
-			if r.carry > 0 {
+			if carry > 0 {
 				writer.WriteString("\n")
-				r.carry = 0
+				carry = 0
 				writer.WriteString("\n")
 			} else {
 				writer.WriteString("\n")
 			}
 			continue
 		}
-		wrapped := r.wrapline(line)
+		wrapped := r.wrapline(line, carry)
 		writer.WriteString(wrapped)
 		if strings.HasSuffix(wrapped, ".") {
 			// Respect full stops
 			writer.WriteString("\n")
-			r.carry = 0
+			carry = 0
 		} else {
-			lastbrk := strings.LastIndex(wrapped, "\n")
-			r.carry = len(wrapped) - 1 - lastbrk
-			if r.carry > 0 {
-				r.carry = r.carry + 1 // account for space to separate
+			lastBrk := strings.LastIndex(wrapped, "\n")
+			if lastBrk == -1 {
+				carry = len(wrapped) + 1
+			} else {
+				carry = len(wrapped) - lastBrk + 1
 			}
 		}
 	}
@@ -76,9 +77,10 @@ func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 }
 
 // wrap a single line to a *colum* length, possibly breaking it
-func (r Rapper) wrapline(line string) string {
+func (r Rapper) wrapline(line string, carry int) string {
 	lastWhite := -1
-	lastNewline := -r.carry - 1
+	lastNewline := -carry - 1
+	log.Println(line, carry)
 
 	out := make([]byte, len(line))
 	var startWithBreak bool
@@ -102,7 +104,7 @@ func (r Rapper) wrapline(line string) string {
 	}
 	if startWithBreak {
 		return "\n" + string(out)
-	} else if r.carry > 0 {
+	} else if carry > 0 {
 		return " " + string(out)
 	} else {
 		return string(out)
