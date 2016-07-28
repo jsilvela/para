@@ -112,14 +112,6 @@ func Test_wrap_respects_full_stops(t *testing.T) {
 	}
 }
 
-func Test_wrap_does_not_add_extra_breaks(t *testing.T) {
-	test := "My name is."
-	result := wraptext(15, test)
-	if test != result {
-		t.Errorf("Content was altered:\n%s\n%s", test, result)
-	}
-}
-
 func Test_lines_with_carry_wrap_to_limit(t *testing.T) {
 	test := "12 456\n1012 is ok"
 	result := wraptext(10, test)
