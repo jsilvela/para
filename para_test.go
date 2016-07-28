@@ -119,3 +119,16 @@ func Test_lines_with_carry_wrap_to_limit(t *testing.T) {
 		t.Errorf("Unexpected result: %s", result)
 	}
 }
+
+func Test_honors_markdown(t *testing.T) {
+	test := `## Purity and the Mob
+This is an enumeration:
+
+* one
+* two
+And then, that too`
+	result := wraptext(80, test)
+	if test != result {
+		t.Errorf("Content was altered:\n%s\n%s", test, result)
+	}
+}
