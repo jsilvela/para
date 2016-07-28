@@ -55,13 +55,11 @@ func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 			// Respect paragraphs and full stops
 			r.pendingBreak = true
 			r.carry = 0
-		} else if strings.HasSuffix(wrapped, ".") {
-			r.carry = 0
 		} else {
 			lastbrk := strings.LastIndex(wrapped, "\n")
-			r.carry = len(line) - 1 - lastbrk
+			r.carry = len(wrapped) - 1 - lastbrk
 			if r.carry > 0 {
-				r.carry = r.carry + 1
+				r.carry = r.carry + 1 // account for space to separate
 			}
 		}
 	}
@@ -71,14 +69,16 @@ func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	return writer.Flush()
 }
 
-// wrap a single line to a colum length, possibly breaking it
+// wrap a single line to a *colum* length, possibly breaking it
 func (r Rapper) wrapline(line string) string {
-	lastWhite, lastNewline := -1, -r.carry-1
+	lastWhite := -1
+	lastNewline := -r.carry-1
+
 	out := make([]byte, len(line))
-	var initbreak bool
 	if len(line) == 0 && r.carry > 0 {
-		initbreak = true
+		return "\n"
 	}
+	var startWithBreak bool
 	for j := 0; j < len(line); j++ {
 		out[j] = line[j]
 		if unicode.IsSpace(rune(line[j])) {
@@ -88,11 +88,11 @@ func (r Rapper) wrapline(line string) string {
 			out[lastWhite] = '\n'
 			lastNewline = lastWhite
 		} else if j-lastNewline > r.maxcols {
-			initbreak = true
-			lastNewline = lastWhite
+			startWithBreak = true
+			lastNewline = -1
 		}
 	}
-	if initbreak {
+	if startWithBreak {
 		return "\n" + string(out)
 	} else if r.carry > 0 {
 		return " " + string(out)

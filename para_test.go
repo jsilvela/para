@@ -29,7 +29,7 @@ func sameText(in, wr string) bool {
 func Test_utf8_works(t *testing.T) {
 	test := "Qué tal está señora?"
 	result := wraptext(40, test)
-	if !sameText(test, result) {
+	if test != result {
 		t.Errorf("Content was altered:\n%s\n%s", test, result)
 	}
 }
@@ -41,7 +41,7 @@ It happens in some places that live off tourism: at the restaurant where you're
 having dinner, your friendly waiter suggests that if you're looking to party,
 his brother in law has the best club in town. Ah, not in the mood for partying?`
 	result := wraptext(80, test)
-	if !sameText(test, result) {
+	if test != result {
 		t.Errorf("Content was altered:\n%s\n%s", test, result)
 	}
 }
@@ -96,11 +96,8 @@ func Test_wrap_respects_one_blank_line(t *testing.T) {
 func Test_wrap_respects_two_blank_lines(t *testing.T) {
 	test := "My name is E.\n\n\nCoyote"
 	result := wraptext(15, test)
-	if !sameText(test, result) {
+	if test != result {
 		t.Errorf("Content was altered:\n%s\n%s", test, result)
-	}
-	if len(strings.Split(result, "\n")) != 4 {
-		t.Errorf("Didn't respect two blank lines:\n%s", result)
 	}
 }
 
@@ -118,10 +115,15 @@ func Test_wrap_respects_full_stops(t *testing.T) {
 func Test_wrap_does_not_add_extra_breaks(t *testing.T) {
 	test := "My name is."
 	result := wraptext(15, test)
-	if !sameText(test, result) {
+	if test != result {
 		t.Errorf("Content was altered:\n%s\n%s", test, result)
 	}
-	if len(strings.Split(result, "\n")) != 1 {
-		t.Errorf("Didn't respect period-break:\n%s", result)
+}
+
+func Test_lines_with_carry_wrap_to_limit(t *testing.T) {
+	test := "12 456\n1012 is ok"
+	result := wraptext(10, test)
+	if result != test {
+		t.Errorf("Unexpected result: %s", result)
 	}
 }
