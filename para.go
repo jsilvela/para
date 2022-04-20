@@ -19,28 +19,31 @@ func main() {
 	} else {
 		num, err := strconv.ParseInt(os.Args[1], 10, 0)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("could not read column width: %v", err)
 		} else {
 			wrap = int(num)
 		}
 	}
 	scanner := bufio.NewScanner(os.Stdin)
 	writer := bufio.NewWriter(os.Stdout)
-	r := Rapper{maxcols: wrap}
+	r := Wrapper{maxcols: wrap}
 	err := r.Wraptext(scanner, writer)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("could not wrap text: %v", err)
 	}
 }
 
-// Rapper contains methods for compressive text wrapping
-type Rapper struct {
+// Wrapper contains methods for compressive text wrapping.
+//
+// It operates on line-oriented streams, as that is how it will be used from
+// the command line.
+type Wrapper struct {
 	maxcols int
 }
 
-// wrap text to column length, compact paragraph along the way
-// respect lines that end in a period
-func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
+// Wraptext wraps text to column length, compacting paragraphs along the way.
+// It respects lines that end in a period
+func (wr Wrapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	var carry int
 	endLine := func() {
 		writer.WriteString("\n")
@@ -56,10 +59,11 @@ func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 			writer.WriteString("\n")
 			continue
 		}
-		wrapped := r.wrapline(line, carry)
+		wrapped := wr.wrapline(line, carry)
 		writer.WriteString(wrapped)
 		if strings.HasSuffix(wrapped, ".") ||
 			strings.HasPrefix(wrapped, "#") ||
+			strings.HasPrefix(wrapped, "-") ||
 			strings.HasPrefix(wrapped, "*") {
 			// Respect full stops, markdown
 			endLine()
@@ -74,9 +78,9 @@ func (r Rapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	return writer.Flush()
 }
 
-// wrap a single line to a *colum* length, possibly breaking it
+// wrapline wraps a single line to a max number of columns, possibly breaking it.
 // there may be carry from a previous line wrapping
-func (r Rapper) wrapline(line string, carry int) string {
+func (r Wrapper) wrapline(line string, carry int) string {
 	lastWhite := -1
 	lastNewline := -carry - 1
 
