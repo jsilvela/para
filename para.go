@@ -41,11 +41,24 @@ type Wrapper struct {
 	maxcols int
 }
 
+// isMarkdownStart determines whether the text opens with
+// a Markdown section or list indicator
+func isMarkdownStart(wrapped string) bool {
+	return strings.HasPrefix(wrapped, "#") ||
+		strings.HasPrefix(wrapped, "-") ||
+		strings.HasPrefix(wrapped, "*")
+}
+
+// closesParagraph checks if the text ends in a full stop
+func closesParagraph(wrapped string) bool {
+	return strings.HasSuffix(wrapped, ".")
+}
+
 // Wraptext wraps text to column length, compacting paragraphs along the way.
 // It respects lines that end in a period
 func (wr Wrapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	var carry int
-	endLine := func() {
+	closeText := func() {
 		writer.WriteString("\n")
 		carry = 0
 	}
@@ -54,19 +67,20 @@ func (wr Wrapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 		if len(line) == 0 {
 			// Respect paragraphs
 			if carry > 0 {
-				endLine()
+				writer.WriteString("\n")
 			}
-			writer.WriteString("\n")
+			closeText()
 			continue
 		}
-		wrapped := wr.wrapline(line, carry)
+		if isMarkdownStart(line) && carry > 0 {
+			// begin fresh, flush previous text
+			closeText()
+		}
+		wrapped := wr.wrapLine(line, carry)
 		writer.WriteString(wrapped)
-		if strings.HasSuffix(wrapped, ".") ||
-			strings.HasPrefix(wrapped, "#") ||
-			strings.HasPrefix(wrapped, "-") ||
-			strings.HasPrefix(wrapped, "*") {
+		if closesParagraph(wrapped) || isMarkdownStart(wrapped) {
 			// Respect full stops, markdown
-			endLine()
+			closeText()
 		} else {
 			lastBrk := strings.LastIndex(wrapped, "\n")
 			carry = len(wrapped) - lastBrk
@@ -78,9 +92,9 @@ func (wr Wrapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	return writer.Flush()
 }
 
-// wrapline wraps a single line to a max number of columns, possibly breaking it.
-// there may be carry from a previous line wrapping
-func (r Wrapper) wrapline(line string, carry int) string {
+// wrapLine wraps a single line to a max number of columns, possibly breaking it.
+// There may be carry from a previous line wrapping
+func (r Wrapper) wrapLine(line string, carry int) string {
 	lastWhite := -1
 	lastNewline := -carry - 1
 
@@ -95,9 +109,12 @@ func (r Wrapper) wrapline(line string, carry int) string {
 			log.Fatal("Word exceeds maxcols, line cannot be wrapped: " + line)
 		}
 		if j-lastNewline > r.maxcols && lastWhite > -1 {
+			// we've exceeded maxcols and have seen a whitespace previously
 			out[lastWhite] = '\n'
 			lastNewline = lastWhite
 		} else if j-lastNewline > r.maxcols && lastNewline < -1 {
+			// counting the carry, we've exceeded maxcols without a space
+			// we should break from the previous fragment
 			startWithBreak = true
 			lastNewline = -1
 		} else if j-lastNewline > r.maxcols {

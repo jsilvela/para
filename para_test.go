@@ -26,7 +26,7 @@ func sameText(in, wr string) bool {
 	return strings.Map(despacer, wr) == strings.Map(despacer, in)
 }
 
-func TestWrapper_Modify(t *testing.T) {
+func TestWrapper_Break(t *testing.T) {
 	for _, spec := range []struct {
 		input         string
 		wrapAt        int
@@ -70,7 +70,7 @@ func TestWrapper_Modify(t *testing.T) {
 	}
 }
 
-func TestWrapper_Passthroug(t *testing.T) {
+func TestWrapper_Passthrough(t *testing.T) {
 	for _, spec := range []struct {
 		name   string
 		input  string
@@ -92,6 +92,18 @@ func TestWrapper_Passthroug(t *testing.T) {
 			wrapAt: 10,
 		},
 		{
+			name: "markdown list compression",
+			input: `# title
+This is an enumeration:
+## and a title right away
+
+* one foo bar
+baz quux
+* two
+`,
+			wrapAt: 40,
+		},
+		{
 			name: "markdown",
 			input: `# title
 This is an enumeration:
@@ -109,7 +121,7 @@ And then, that too`,
 		t.Run(spec.name, func(t *testing.T) {
 			result := wraptext(spec.wrapAt, spec.input)
 			if result != spec.input {
-				t.Errorf("testing %s, result altered: %s", spec.name, result)
+				t.Errorf("testing '%s', result altered:\n%s", spec.name, result)
 			}
 		})
 	}
