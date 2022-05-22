@@ -12,7 +12,7 @@ func wraptext(col int, in string) string {
 	scanner := bufio.NewScanner(reader)
 	var buffer bytes.Buffer
 	writer := bufio.NewWriter(&buffer)
-	Wrapper{maxcols: col}.Wraptext(scanner, writer)
+	Wrapper{maxCols: col}.Wraptext(scanner, writer)
 	return buffer.String()
 }
 
@@ -24,6 +24,30 @@ func sameText(in, wr string) bool {
 		return x
 	}
 	return strings.Map(despacer, wr) == strings.Map(despacer, in)
+}
+
+func TestWrapper_Compact(t *testing.T) {
+	for _, spec := range []struct {
+		input         string
+		wrapAt        int
+		expectedLines int
+	}{
+		{
+			input:         "My name is Wile\nE Coyote\nGenius",
+			wrapAt:        40,
+			expectedLines: 1,
+		},
+	} {
+		t.Run("wrapping"+spec.input, func(t *testing.T) {
+			result := wraptext(spec.wrapAt, spec.input)
+			if !sameText(result, spec.input) {
+				t.Errorf("text was altered: %s", result)
+			}
+			if lines := len(strings.Split(result, "\n")); lines != spec.expectedLines {
+				t.Errorf("expected %d lines, got %d", spec.expectedLines, lines)
+			}
+		})
+	}
 }
 
 func TestWrapper_Break(t *testing.T) {

@@ -26,7 +26,7 @@ func main() {
 	}
 	scanner := bufio.NewScanner(os.Stdin)
 	writer := bufio.NewWriter(os.Stdout)
-	r := Wrapper{maxcols: wrap}
+	r := Wrapper{maxCols: wrap}
 	err := r.Wraptext(scanner, writer)
 	if err != nil {
 		log.Fatalf("could not wrap text: %v", err)
@@ -38,52 +38,50 @@ func main() {
 // It operates on line-oriented streams, as that is how it will be used from
 // the command line.
 type Wrapper struct {
-	maxcols int
+	maxCols int
 }
 
 // isMarkdownStart determines whether the text opens with
 // a Markdown section or list indicator
-func isMarkdownStart(wrapped string) bool {
-	return strings.HasPrefix(wrapped, "#") ||
-		strings.HasPrefix(wrapped, "-") ||
-		strings.HasPrefix(wrapped, "*")
+func isMarkdownStart(text string) bool {
+	return strings.HasPrefix(text, "#") ||
+		strings.HasPrefix(text, "-") ||
+		strings.HasPrefix(text, "*")
 }
 
 // closesParagraph checks if the text ends in a full stop
-func closesParagraph(wrapped string) bool {
-	return strings.HasSuffix(wrapped, ".")
+func closesParagraph(text string) bool {
+	return strings.HasSuffix(text, ".")
 }
 
 // Wraptext wraps text to column length, compacting paragraphs along the way.
-// It respects lines that end in a period
+// It respects lines that end in a period, as well as Markdown lists and sections
 func (wr Wrapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	var carry int
-	closeText := func() {
-		writer.WriteString("\n")
-		carry = 0
+	// flushRunningText puts a line break on the open end of the text
+	flushRunningText := func() {
+		if carry > 0 {
+			writer.WriteString("\n")
+			carry = 0
+		}
 	}
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if len(line) == 0 {
 			// Respect paragraphs
-			if carry > 0 {
-				writer.WriteString("\n")
-			}
-			closeText()
+			flushRunningText()
+			writer.WriteString("\n")
 			continue
 		}
-		if isMarkdownStart(line) && carry > 0 {
-			// begin fresh, flush previous text
-			closeText()
+		if isMarkdownStart(line) {
+			flushRunningText()
 		}
-		wrapped := wr.wrapLine(line, carry)
+		var wrapped string
+		wrapped, carry = wr.wrapLine(line, carry)
 		writer.WriteString(wrapped)
-		if closesParagraph(wrapped) || isMarkdownStart(wrapped) {
+		if closesParagraph(line) || isMarkdownStart(line) {
 			// Respect full stops, markdown
-			closeText()
-		} else {
-			lastBrk := strings.LastIndex(wrapped, "\n")
-			carry = len(wrapped) - lastBrk
+			flushRunningText()
 		}
 	}
 	if scanner.Err() != nil {
@@ -92,40 +90,55 @@ func (wr Wrapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 	return writer.Flush()
 }
 
-// wrapLine wraps a single line to a max number of columns, possibly breaking it.
-// There may be carry from a previous line wrapping
-func (r Wrapper) wrapLine(line string, carry int) string {
+// wrapLine wraps a single line to a max number of columns, possibly breaking it
+// into more lines by adding newlines in-place between words.
+// There may be carry from a previous line wrapping.
+//
+// returns the wrapped text, and the number of carry-over characters
+//
+// NOTE: the input lines come from a line-scanner and don't have the terminating `\n`
+func (r Wrapper) wrapLine(line string, carry int) (string, int) {
 	lastWhite := -1
 	lastNewline := -carry - 1
 
 	out := make([]byte, len(line))
+	copy(out, line)
 	var startWithBreak bool
 	for j := 0; j < len(line); j++ {
-		out[j] = line[j]
 		if unicode.IsSpace(rune(line[j])) {
 			lastWhite = j
 		}
-		if j-lastWhite > r.maxcols {
-			log.Fatal("Word exceeds maxcols, line cannot be wrapped: " + line)
+		if j-lastWhite > r.maxCols {
+			log.Fatal("Word exceeds maxCols, line cannot be wrapped: " + line)
 		}
-		if j-lastNewline > r.maxcols && lastWhite > -1 {
-			// we've exceeded maxcols and have seen a whitespace previously
+		if j-lastNewline > r.maxCols && lastWhite > -1 {
+			// we exceeded maxcols and can put a linebreak between previous words
 			out[lastWhite] = '\n'
 			lastNewline = lastWhite
-		} else if j-lastNewline > r.maxcols && lastNewline < -1 {
-			// counting the carry, we've exceeded maxcols without a space
-			// we should break from the previous fragment
+		} else if j-lastNewline > r.maxCols && lastNewline < -1 {
+			// counting the carry, we would exceed maxCols.
+			// We should break from the previous fragment
 			startWithBreak = true
 			lastNewline = -1
-		} else if j-lastNewline > r.maxcols {
+		} else if j-lastNewline > r.maxCols {
 			panic("Should never get here")
 		}
 	}
-	if startWithBreak {
-		return "\n" + string(out)
-	} else if carry > 0 {
-		return " " + string(out)
-	} else {
-		return string(out)
+
+	var wrapped string
+	switch {
+	case startWithBreak:
+		// we were unable to compress by appending to the previous carry
+		wrapped = "\n" + string(out)
+	case carry > 0:
+		// we appended text to previous carry - we add a word break
+		wrapped = " " + string(out)
+	default:
+		wrapped = string(out)
 	}
+
+	lastBreak := strings.LastIndex(wrapped, "\n")
+	newCarry := len(wrapped) - lastBreak
+
+	return wrapped, newCarry
 }
