@@ -2,7 +2,7 @@
 
 A simple command-line utility to wrap text to a given number of columns. \
 Meant for wrapping of text in *Sam* or *Acme*, or any other
-editors which which don't do their own wrapping/compacting.
+editors which don't do their own wrapping/compacting.
 
 *para* wraps text to a given column, filling each line as much as possible,
 to form compact paragraphs.
