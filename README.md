@@ -20,6 +20,20 @@ If the optional number is not provided, the default width is 80.
 *para* takes input from `stdin`, and outputs to `stdout`; this is so that
 it can be used as a piped command in *Acme* or *Sam*.
 
+## Building / testing
+
+Clone the repo, then.
+
+``` sh
+cd cloned-repo
+go test
+go build
+go install
+```
+
+Note that depending on your Go environment, you may need to execute the
+`go install` with privileges.
+
 ## How it works
 
 `para` fills two goals: wrapping and compacting.
