@@ -64,7 +64,7 @@ word word word word word word word word word word word word
 word
 ```
 
-We would want the next input line to continue filling the same paragrpah.
+We would want the next input line to continue filling the same paragraph.
 
 ``` text
 word word word word word word word word word word word word
@@ -74,7 +74,7 @@ word newLineWord newLineWord newLineWord newLineWord …
 
 This means that when wrapping a line of input:
 
-1. we don't necessarily want to "close" the paragrpah with a newline
+1. we don't necessarily want to "close" the paragraph with a newline
 1. we may want to append to an un-closed paragraph seen previously
 
 To fill these needs, we keep track of the *carry* between lines of input.

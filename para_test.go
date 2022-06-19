@@ -12,7 +12,7 @@ func wraptext(col int, in string) string {
 	scanner := bufio.NewScanner(reader)
 	var buffer bytes.Buffer
 	writer := bufio.NewWriter(&buffer)
-	Wrapper{maxCols: col}.Wraptext(scanner, writer)
+	_ = Wrapper{maxCols: col}.Wraptext(scanner, writer)
 	return buffer.String()
 }
 

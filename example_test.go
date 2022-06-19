@@ -13,7 +13,7 @@ func ExampleWrapper_Wraptext_splits() {
 	scanner := bufio.NewScanner(reader)
 	var buffer bytes.Buffer
 	writer := bufio.NewWriter(&buffer)
-	Wrapper{maxCols: 20}.Wraptext(scanner, writer)
+	_ = Wrapper{maxCols: 20}.Wraptext(scanner, writer)
 	fmt.Println(buffer.String())
 	// Output:
 	// My name is Wile E.
@@ -27,7 +27,7 @@ func ExampleWrapper_Wraptext_compacts() {
 	scanner := bufio.NewScanner(reader)
 	var buffer bytes.Buffer
 	writer := bufio.NewWriter(&buffer)
-	Wrapper{maxCols: 80}.Wraptext(scanner, writer)
+	_ = Wrapper{maxCols: 80}.Wraptext(scanner, writer)
 	fmt.Println(buffer.String())
 	// Output:
 	// My name is Wile E Coyote, genius. I'm not here selling

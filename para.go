@@ -97,7 +97,7 @@ func (wr Wrapper) Wraptext(scanner *bufio.Scanner, writer *bufio.Writer) error {
 // returns the wrapped text, and the number of carry-over characters
 //
 // NOTE: the input lines come from a line-scanner and don't have the terminating `\n`
-func (r Wrapper) wrapLine(line string, carry int) (string, int) {
+func (wr Wrapper) wrapLine(line string, carry int) (string, int) {
 	lastWhite := -1
 	lastNewline := -carry - 1
 
@@ -108,19 +108,19 @@ func (r Wrapper) wrapLine(line string, carry int) (string, int) {
 		if unicode.IsSpace(rune(line[j])) {
 			lastWhite = j
 		}
-		if j-lastWhite > r.maxCols {
+		if j-lastWhite > wr.maxCols {
 			log.Fatal("Word exceeds maxCols, line cannot be wrapped: " + line)
 		}
-		if j-lastNewline > r.maxCols && lastWhite > -1 {
+		if j-lastNewline > wr.maxCols && lastWhite > -1 {
 			// we exceeded maxcols and can put a linebreak between previous words
 			out[lastWhite] = '\n'
 			lastNewline = lastWhite
-		} else if j-lastNewline > r.maxCols && lastNewline < -1 {
+		} else if j-lastNewline > wr.maxCols && lastNewline < -1 {
 			// counting the carry, we would exceed maxCols.
 			// We should break from the previous fragment
 			startWithBreak = true
 			lastNewline = -1
-		} else if j-lastNewline > r.maxCols {
+		} else if j-lastNewline > wr.maxCols {
 			panic("Should never get here")
 		}
 	}
